@@ -1,0 +1,33 @@
+stages:
+  - build
+  - publish
+  - deploy
+
+variables:
+  DOCKERHUB_USERNAME: gregtech5
+  DOCKERHUB_PASSWORD: gregtech5
+  GOOGLE_APPLICATION_CREDENTIALS: "./dotnetcore-386811-a7e92e55ff8f.json"
+  PROJECT_ID: dotnetcore-386811
+
+before_script:
+  - apt-get update && apt-get install -y curl
+  - curl https://sdk.cloud.google.com | bash
+
+build:
+  stage: build
+  script:
+    - apt-get update && apt-get install -y docker.io
+    - docker build -t first-docker:v1 ./
+
+publish:
+  stage: publish
+  script:
+    - docker login --username gregtech5 --password gregtech5
+    - docker push gregtech5/first-docker:v1
+
+deploy:
+  stage: deploy
+  script:
+    - gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+    - gcloud config set project $PROJECT_ID
+    - kubectl apply -f first-docker-replicaset.yaml
